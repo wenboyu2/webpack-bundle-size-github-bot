@@ -1,0 +1,21 @@
+{
+    "name": "webpack-bundle-size-github-bot",
+    "description": "Checks the webpack bundle size impact of a github PR",
+    "version": "0.0.1",
+    "main": "index.js",
+    "license": "MIT",
+    "scripts": {
+        "start": "node ./src/index.js"
+    },
+    "dependencies": {
+        "@octokit/rest": "^15.2.4",
+        "axios": "^0.18.0",
+        "dotenv": "^5.0.1",
+        "eslint": "^4.19.0",
+        "filesize": "^3.6.0",
+        "filesize-parser": "1.4.2",
+        "loglevel": "^1.6.1",
+        "minimist": "^1.2.0",
+        "shelljs": "^0.8.1"
+    }
+}
