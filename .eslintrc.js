@@ -11,7 +11,8 @@ module.exports = {
         semi: ['error', 'always']
     },
     globals: {
-        module: true
+        module: true,
+        process: true
     },
     parserOptions: {
         ecmaVersion: 2017,

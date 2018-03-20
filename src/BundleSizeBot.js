@@ -1,54 +1,23 @@
 const log = require('loglevel');
 
 const GithubClient = require('./GithubClient');
-const { getPrBundleSizes } = require('./travis');
-const getMessage = require('./getMessage');
+const PrAnalyticsJob = require('./PrAnalyticsJob');
 
 class BundleSizeBot {
-    constructor(currPrNumber) {
-        this.currPrNumber = currPrNumber;
-        this.gc = new GithubClient(currPrNumber);
+    constructor() {
+        this.gc = new GithubClient();
     }
 
     async run() {
-        this.prevPrNumber = await this.gc.getPrevPrNumber();
-        this.currBundleSizes = await getPrBundleSizes(this.currPrNumber);
-        log.info(this.currBundleSizes);
-        this.prevBundleSizes = await getPrBundleSizes(this.prevPrNumber);
-        log.info(this.prevBundleSizes);
-        this.bundleSizeAnalytics();
-        this.postComment();
-    }
+        const allOpenPrNumbers = await this.gc.getOpenPullRequestsNumbers();
+        log.info(`BundleSizeBot allOpenPrNumbers ==> ${allOpenPrNumbers}`);
 
-    bundleSizeAnalytics() {
-        this.diffBundleSizes = {};
-        this.totalBundleSizes = { curr: 0, prev: 0, diff: 0 };
-        Object.keys(this.currBundleSizes).forEach(key => {
-            const currVal = this.currBundleSizes[key];
-            const prevVal = this.prevBundleSizes[key];
-            const diff = currVal - prevVal;
+        const jobs = Array.prototype.map.call(
+            allOpenPrNumbers,
+            prNumber => new PrAnalyticsJob(prNumber, this.gc)
+        );
 
-            this.totalBundleSizes.prev += prevVal;
-            this.totalBundleSizes.curr += currVal;
-            this.totalBundleSizes.diff += diff;
-
-            this.diffBundleSizes[key] = diff;
-            this.diffBundleSizes.totalDiff += diff;
-        });
-        log.info(this.totalBundleSizes);
-    }
-
-    postComment() {
-        const data = {
-            curr: this.currBundleSizes,
-            diff: this.diffBundleSizes,
-            prev: this.prevBundleSizes,
-            total: this.totalBundleSizes
-        };
-
-        const message = getMessage(data, this.prevPrNumber);
-        log.info(message);
-        this.gc.postPullRequestComment(message);
+        await Promise.all(Array.prototype.map.call(jobs, job => job.run()));
     }
 }
 

@@ -9,7 +9,7 @@ function get(url, options = {}) {
     return axios.get(url, {
         ...options,
         headers: {
-            Authorization: `token ${config.TRAVIS_TOKEN}`,
+            Authorization: `token ${config.CI_TOKEN}`,
             'User-Agent': 'webpack-bundle-size-github-bot',
             'Travis-API-Version': '3'
         }
@@ -31,9 +31,7 @@ async function getLatestBuildOfPr(prNumber) {
                 parseInt(prNumber, 10)
         );
 
-        log.info(
-            `getLatestBuildOfPr ==> ${JSON.stringify(latestBuild, null, 2)}`
-        );
+        log.info(`getLatestBuildOfPr #${prNumber} ==> ${latestBuild.id}`);
 
         return latestBuild;
     } catch (e) {
@@ -45,7 +43,7 @@ async function getPrBundleSizes(prNumber) {
     const build = await getLatestBuildOfPr(prNumber);
     const jobId = build.jobs[0].id;
 
-    log.info(`getPrBundleSizes - jobId ==> ${jobId}`);
+    log.info(`getPrBundleSizes - jobId #${prNumber} ==> ${jobId}`);
 
     try {
         const res = await get(`https://api.travis-ci.org/job/${jobId}/log`);
@@ -66,15 +64,12 @@ function parseJobLog(content) {
     const parsedLog = {};
 
     bundleNamesRegexList.forEach(({ name, pattern }) => {
-        log.info(`parseJobLog - forEach ==> ${name}, ${pattern}`);
         const regex = new RegExp(`(${pattern})\\s+([\\d.+]+ \\w+)`);
         const matchResult = cleanedContent.match(regex);
 
         if (!matchResult) {
             return;
         }
-
-        log.info(regex);
 
         const [, , sizeString] = matchResult;
         parsedLog[name] = filesizeParser(sizeString);

@@ -2,9 +2,10 @@ const config = require('dotenv').config().parsed;
 const octokit = require('@octokit/rest');
 const log = require('loglevel');
 
+const { title } = require('./message');
+
 class GithubClient {
-    constructor(prNumber) {
-        this.currPr = prNumber;
+    constructor() {
         this.ok = octokit();
         this.ok.authenticate({
             type: 'basic',
@@ -13,40 +14,27 @@ class GithubClient {
         });
     }
 
-    async getMergeBaseCommit() {
+    async getMergeBaseCommit(prNumber) {
         try {
             const res = await this.ok.repos.compareCommits({
                 owner: config.GITHUB_OWNER,
                 repo: config.GITHUB_REPO,
-                base: `pull/${this.currPr}/head`,
+                base: `pull/${prNumber}/head`,
                 head: 'master'
             });
             log.info(
-                `getMergeBaseCommit ==> ${res.data.merge_base_commit.sha}`
+                `getMergeBaseCommit #${prNumber} ==> ${
+                    res.data.merge_base_commit.sha
+                }`
             );
             return res.data.merge_base_commit.sha;
         } catch (e) {
-            return null;
+            // noop
         }
     }
 
-    async getPrBranchName(prNumber) {
-        try {
-            const res = await this.ok.pullRequests.get({
-                owner: config.GITHUB_OWNER,
-                repo: config.GITHUB_REPO,
-                number: prNumber
-            });
-
-            log.info(`getPrBranchName ==> ${res.data.head}`);
-            return res.data.head.ref;
-        } catch (e) {
-            return;
-        }
-    }
-
-    async getPrevPrNumber() {
-        const commitHash = await this.getMergeBaseCommit();
+    async getPrevPrNumber(prNumber) {
+        const commitHash = await this.getMergeBaseCommit(prNumber);
         if (!commitHash) {
             return;
         }
@@ -63,23 +51,100 @@ class GithubClient {
             if (!items.length) {
                 return;
             }
-            log.info(`getPrevPrNumber ==> ${items[0].number}`);
+            log.info(`getPrevPrNumber #${prNumber} ==> ${items[0].number}`);
 
             return items[0].number;
         } catch (e) {
-            return;
+            // noop
         }
     }
 
-    postPullRequestComment(message) {
-        log.info(`postPullRequestComment ==> ${message}`);
-        this.ok.issues.createComment({
+    async getOpenPullRequestsNumbers() {
+        try {
+            const res = await this.ok.pullRequests.getAll({
+                owner: config.GITHUB_OWNER,
+                repo: config.GITHUB_REPO,
+                state: 'open'
+            });
+
+            return res.data.map(pr => pr.number);
+        } catch (e) {
+            // noop
+        }
+    }
+
+    async getPullRequestComments(prNumber) {
+        try {
+            const res = await this.ok.issues.getComments({
+                owner: config.GITHUB_OWNER,
+                repo: config.GITHUB_REPO,
+                number: prNumber
+            });
+
+            return res.data;
+        } catch (e) {
+            // noop
+        }
+    }
+
+    async getExistingBotComment(prNumber) {
+        try {
+            const comments = await this.getPullRequestComments(prNumber);
+            const botComment = comments.find(
+                ({ body }) => body.indexOf(title) !== -1
+            );
+
+            return botComment;
+        } catch (e) {
+            // noop
+        }
+    }
+
+    updatePullRequestComment(message, commentId) {
+        log.info(`updatePullRequestComment ==> ${commentId}`);
+        this.ok.issues.editComment({
             owner: config.GITHUB_OWNER,
             repo: config.GITHUB_REPO,
-            number: this.currPr,
+            id: commentId,
+            body: message
+        });
+    }
+
+    async postPullRequestComment(message, prNumber) {
+        const botComment = await this.getExistingBotComment(prNumber);
+
+        if (botComment) {
+            const { id: botCommentId, body: botCommentBody } = botComment;
+            const areCommentsIdentical = botCommentBody === message;
+
+            log.info(
+                `postPullRequestComment #${prNumber} existing commentId ==> ${botCommentId}`
+            );
+            log.info(
+                `postPullRequestComment #${prNumber} ${botCommentId} areCommentsIdentical ==> ${areCommentsIdentical}`
+            );
+
+            if (areCommentsIdentical) {
+                return;
+            }
+
+            await this.updatePullRequestComment(message, botCommentId);
+            return;
+        }
+
+        await this.ok.issues.createComment({
+            owner: config.GITHUB_OWNER,
+            repo: config.GITHUB_REPO,
+            number: prNumber,
             body: message
         });
     }
 }
+
+// (async function() {
+//     log.setLevel('info');
+//     const bsb = new GithubClient();
+//     console.log(await bsb.getPullRequestComments(3));
+// })();
 
 module.exports = GithubClient;

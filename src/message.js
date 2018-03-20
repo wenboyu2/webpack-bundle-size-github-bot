@@ -14,6 +14,8 @@ ${title}
 | ------------- |:----:|:------:|:-----:|
 ${tableContent}${totalTableRow}
 Compared against previously merged PR #${prevPrNumber}
+
+**Powered by [webpack-bundle-size-github-bot](https://github.com/wenboyu2/webpack-bundle-size-github-bot/)**
 `;
 };
 
@@ -28,4 +30,7 @@ const getTableRows = ({ curr, diff, prev }) => {
 const getTableRow = (name, curr, prev, diff) =>
     `| ${name} | ${filesize(diff)} | ${filesize(curr)} | ${filesize(prev)} |\n`;
 
-module.exports = getMessage;
+module.exports = {
+    getMessage,
+    title
+};
