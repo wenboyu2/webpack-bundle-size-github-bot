@@ -16,12 +16,12 @@ Bot Env
 
 Target Project
 
-* webpack v4
+* webpack v3, v4
 
 CI
 
 * Travis
-* Jenkins (WIP)
+* Jenkins Blue Ocean
 
 ### Installing
 
