@@ -1,12 +1,12 @@
 const filesize = require('filesize');
 
 const title = '# Webpack Bundle Size Github Bot';
+const legacyTitle = '**:zap:Hello, I\'m a bot:zap:**';
+
 const getMessage = (data, prevPrNumber) => {
     const tableContent = getTableRows(data);
     const { curr, prev, diff } = data.total;
-    const totalTableRow = `| Total | ${filesize(diff)} | ${filesize(
-        curr
-    )} | ${filesize(prev)} |\n`;
+    const totalTableRow = `| Total | ${filesize(diff)} | ${filesize(prev)} | ${filesize(curr)} |\n`;
     return `
 ${title}
 
@@ -28,9 +28,10 @@ const getTableRows = ({ curr, diff, prev }) => {
 };
 
 const getTableRow = (name, curr, prev, diff) =>
-    `| ${name} | ${filesize(diff)} | ${filesize(curr)} | ${filesize(prev)} |\n`;
+    `| ${name} | ${filesize(diff)} | ${filesize(prev)} | ${filesize(curr)} |\n`;
 
 module.exports = {
     getMessage,
-    title
+    title,
+    legacyTitle
 };

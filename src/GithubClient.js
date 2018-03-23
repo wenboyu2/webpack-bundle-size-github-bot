@@ -2,11 +2,13 @@ const config = require('dotenv').config().parsed;
 const octokit = require('@octokit/rest');
 const log = require('loglevel');
 
-const { title } = require('./message');
+const { title, legacyTitle } = require('./message');
 
 class GithubClient {
     constructor() {
-        this.ok = octokit();
+        this.ok = octokit({
+            baseUrl: config.GITHUB_BASE_URL
+        });
         this.ok.authenticate({
             type: 'basic',
             username: config.GITHUB_USERNAME,
@@ -23,9 +25,7 @@ class GithubClient {
                 head: 'master'
             });
             log.info(
-                `getMergeBaseCommit #${prNumber} ==> ${
-                    res.data.merge_base_commit.sha
-                }`
+                `getMergeBaseCommit #${prNumber} ==> ${res.data.merge_base_commit.sha}`
             );
             return res.data.merge_base_commit.sha;
         } catch (e) {
@@ -33,17 +33,43 @@ class GithubClient {
         }
     }
 
+    async getCommitsBefore(commitHash) {
+        try {
+            const res = await this.ok.repos.getCommits({
+                owner: config.GITHUB_OWNER,
+                repo: config.GITHUB_REPO,
+                sha: commitHash
+            });
+            log.info('getCommits');
+            return res.data.slice(1);
+        } catch (e) {
+            // noop
+        }
+    }
+
     async getPrevPrNumber(prNumber) {
         const commitHash = await this.getMergeBaseCommit(prNumber);
-        if (!commitHash) {
-            return;
+
+        const immediateCommitPrNumber = await this.getCommitPrNumber(
+            commitHash
+        );
+        if (immediateCommitPrNumber) {
+            return immediateCommitPrNumber;
         }
 
+        const prevCommits = await this.getCommitsBefore(commitHash);
+        for (let commit of prevCommits) {
+            const prNumber = await this.getCommitPrNumber(commit.sha);
+            if (prNumber) {
+                return prNumber;
+            }
+        }
+    }
+
+    async getCommitPrNumber(commitHash) {
         try {
             const res = await this.ok.search.issues({
-                q: `repo:${config.GITHUB_OWNER}/${
-                    config.GITHUB_REPO
-                } ${commitHash.substr(0, 7)}`
+                q: `repo:${config.GITHUB_OWNER}/${config.GITHUB_REPO} ${commitHash.substr(0, 7)}`
             });
 
             const items = res.data.items;
@@ -51,7 +77,7 @@ class GithubClient {
             if (!items.length) {
                 return;
             }
-            log.info(`getPrevPrNumber #${prNumber} ==> ${items[0].number}`);
+            log.info(`getPrevPrNumber #${commitHash} ==> ${items[0].number}`);
 
             return items[0].number;
         } catch (e) {
@@ -91,7 +117,9 @@ class GithubClient {
         try {
             const comments = await this.getPullRequestComments(prNumber);
             const botComment = comments.find(
-                ({ body }) => body.indexOf(title) !== -1
+                ({ body }) =>
+                    body.indexOf(title) !== -1 ||
+                    body.indexOf(legacyTitle) !== -1
             );
 
             return botComment;
@@ -144,7 +172,7 @@ class GithubClient {
 // (async function() {
 //     log.setLevel('info');
 //     const bsb = new GithubClient();
-//     console.log(await bsb.getPullRequestComments(3));
+//     console.log(await bsb.getPrevPrNumber(1));
 // })();
 
 module.exports = GithubClient;

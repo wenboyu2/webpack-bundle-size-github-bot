@@ -1,6 +1,6 @@
 const log = require('loglevel');
 
-const { getPrBundleSizes } = require('./travis');
+const { getPrBundleSizes } = require('./ci');
 const { getMessage } = require('./message');
 
 class PrAnalyticsJob {
@@ -11,6 +11,7 @@ class PrAnalyticsJob {
 
     async run() {
         this.prevPrNumber = await this.gc.getPrevPrNumber(this.currPrNumber);
+        log.info(`run prevPrNumber ==> ${this.prevPrNumber}`);
         this.currBundleSizes = await getPrBundleSizes(this.currPrNumber);
         log.info(`#${this.currPrNumber}`, this.currBundleSizes);
         this.prevBundleSizes = await getPrBundleSizes(this.prevPrNumber);
