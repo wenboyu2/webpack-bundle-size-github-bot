@@ -30,23 +30,24 @@ async function getTravisLatestBuildIdOfPr(prNumber) {
     const slug = encodeURIComponent(
         `${config.GITHUB_OWNER}/${config.GITHUB_REPO}`
     );
-    try {
-        const res = await getTravis(
-            `https://api.travis-ci.org/repo/${slug}/builds?event_type=pull_request&state=passed&sort_by=finished_at:desc&limit=100`
-        );
 
-        const latestBuild = res.data.builds.find(
-            build =>
-                parseInt(build.pull_request_number, 10) ===
-                parseInt(prNumber, 10)
-        );
-        const id = latestBuild.jobs[0].id;
-        log.info(`getLatestBuildIdOfPr #${prNumber} ==> ${id}`);
+    const res = await getTravis(
+        `https://api.travis-ci.org/repo/${slug}/builds?event_type=pull_request&state=passed&sort_by=finished_at:desc&limit=100`
+    );
 
-        return id;
-    } catch (e) {
-        // noop
+    const latestBuild = res.data.builds.find(
+        build =>
+            parseInt(build.pull_request_number, 10) === parseInt(prNumber, 10)
+    );
+    const id = latestBuild.jobs[0].id;
+
+    if (latestBuild.state !== 'passed') {
+        throw new Error(`PR #${prNumber} latest build ${id} is not successful`);
     }
+
+    log.info(`getLatestBuildIdOfPr #${prNumber} ==> ${id}`);
+
+    return id;
 }
 
 async function getTravisPrBundleSizes(prNumber) {
@@ -54,42 +55,34 @@ async function getTravisPrBundleSizes(prNumber) {
 
     log.info(`getPrBundleSizes - jobId #${prNumber} ==> ${jobId}`);
 
-    try {
-        const res = await getTravis(
-            `https://api.travis-ci.org/job/${jobId}/log`
-        );
-        return parseJobLog(res.data.log_parts[0].content);
-    } catch (e) {
-        // noop
-    }
+    const res = await getTravis(`https://api.travis-ci.org/job/${jobId}/log`);
+    return parseJobLog(res.data.log_parts[0].content);
 }
 
 async function getJenkinsLatestBuildOfPr(prNumber) {
-    try {
-        const res = await axios.get(
-            `${baseUrl}/blue/rest/organizations/jenkins/pipelines/EndUserApp/pipelines/ContinuousIntegration/pipelines/PullRequest/runs/`
+    const res = await axios.get(
+        `${baseUrl}/blue/rest/organizations/jenkins/pipelines/EndUserApp/pipelines/ContinuousIntegration/pipelines/PullRequest/runs/`
+    );
+
+    const latestBuild = res.data.find(build => {
+        if (!build.name) {
+            return;
+        }
+        const match = build.name.match(/pr\/(\d+)/i);
+        return !!match && parseInt(match[1], 10) === parseInt(prNumber, 10);
+    });
+
+    const buildId = latestBuild.id;
+
+    if (latestBuild.result !== 'SUCCESS') {
+        throw new Error(
+            `PR #${prNumber} latest build ${buildId} is not successful`
         );
-
-        const latestBuild = res.data.find(build => {
-            if (!build.name) {
-                return;
-            }
-            const match = build.name.match(/pr\/(\d+)/i);
-            return (
-                !!match &&
-                build.result === 'SUCCESS' &&
-                parseInt(match[1], 10) === parseInt(prNumber, 10)
-            );
-        });
-
-        const buildId = latestBuild.id;
-
-        log.info(`getJenkinsLatestBuildOfPr #${prNumber} ==> ${buildId}`);
-
-        return buildId;
-    } catch (e) {
-        // noop
     }
+
+    log.info(`getJenkinsLatestBuildOfPr #${prNumber} ==> ${buildId}`);
+
+    return buildId;
 }
 
 async function getJenkinsPrBundleSizes(prNumber) {
@@ -97,14 +90,10 @@ async function getJenkinsPrBundleSizes(prNumber) {
 
     log.info(`getPrBundleSizes - jobId #${prNumber} ==> ${jobId}`);
 
-    try {
-        const res = await axios.get(
-            `${baseUrl}/blue/rest/organizations/jenkins/pipelines/EndUserApp/pipelines/ContinuousIntegration/pipelines/PullRequest/runs/${jobId}/log`
-        );
-        return parseJobLog(res.data);
-    } catch (e) {
-        // noop
-    }
+    const res = await axios.get(
+        `${baseUrl}/blue/rest/organizations/jenkins/pipelines/EndUserApp/pipelines/ContinuousIntegration/pipelines/PullRequest/runs/${jobId}/log`
+    );
+    return parseJobLog(res.data);
 }
 
 function cleanString(value) {
@@ -137,7 +126,7 @@ function parseJobLog(content) {
 
 // (async function() {
 //     log.enableAll();
-//     const res = await getPrBundleSizes(1);
+//     const res = await getJenkinsLatestBuildOfPr(1167);
 //     console.log(res);
 // })();
 

@@ -17,34 +17,26 @@ class GithubClient {
     }
 
     async getMergeBaseCommit(prNumber) {
-        try {
-            const res = await this.ok.repos.compareCommits({
-                owner: config.GITHUB_OWNER,
-                repo: config.GITHUB_REPO,
-                base: `pull/${prNumber}/head`,
-                head: 'master'
-            });
-            log.info(
-                `getMergeBaseCommit #${prNumber} ==> ${res.data.merge_base_commit.sha}`
-            );
-            return res.data.merge_base_commit.sha;
-        } catch (e) {
-            // noop
-        }
+        const res = await this.ok.repos.compareCommits({
+            owner: config.GITHUB_OWNER,
+            repo: config.GITHUB_REPO,
+            base: `pull/${prNumber}/head`,
+            head: 'master'
+        });
+        log.info(
+            `getMergeBaseCommit #${prNumber} ==> ${res.data.merge_base_commit.sha}`
+        );
+        return res.data.merge_base_commit.sha;
     }
 
     async getCommitsBefore(commitHash) {
-        try {
-            const res = await this.ok.repos.getCommits({
-                owner: config.GITHUB_OWNER,
-                repo: config.GITHUB_REPO,
-                sha: commitHash
-            });
-            log.info('getCommits');
-            return res.data.slice(1);
-        } catch (e) {
-            // noop
-        }
+        const res = await this.ok.repos.getCommits({
+            owner: config.GITHUB_OWNER,
+            repo: config.GITHUB_REPO,
+            sha: commitHash
+        });
+        log.info('getCommits');
+        return res.data.slice(1);
     }
 
     async getPrevPrNumber(prNumber) {
@@ -67,65 +59,48 @@ class GithubClient {
     }
 
     async getCommitPrNumber(commitHash) {
-        try {
-            const res = await this.ok.search.issues({
-                q: `repo:${config.GITHUB_OWNER}/${config.GITHUB_REPO} ${commitHash.substr(0, 7)}`
-            });
+        const res = await this.ok.search.issues({
+            q: `repo:${config.GITHUB_OWNER}/${config.GITHUB_REPO} ${commitHash.substr(0, 7)}`
+        });
 
-            const items = res.data.items;
+        const items = res.data.items;
 
-            if (!items.length) {
-                return;
-            }
-            log.info(`getPrevPrNumber #${commitHash} ==> ${items[0].number}`);
-
-            return items[0].number;
-        } catch (e) {
-            // noop
+        if (!items.length) {
+            return;
         }
+        log.info(`getPrevPrNumber #${commitHash} ==> ${items[0].number}`);
+
+        return items[0].number;
     }
 
     async getOpenPullRequestsNumbers() {
-        try {
-            const res = await this.ok.pullRequests.getAll({
-                owner: config.GITHUB_OWNER,
-                repo: config.GITHUB_REPO,
-                state: 'open'
-            });
+        const res = await this.ok.pullRequests.getAll({
+            owner: config.GITHUB_OWNER,
+            repo: config.GITHUB_REPO,
+            state: 'open'
+        });
 
-            return res.data.map(pr => pr.number);
-        } catch (e) {
-            // noop
-        }
+        return res.data.map(pr => pr.number);
     }
 
     async getPullRequestComments(prNumber) {
-        try {
-            const res = await this.ok.issues.getComments({
-                owner: config.GITHUB_OWNER,
-                repo: config.GITHUB_REPO,
-                number: prNumber
-            });
+        const res = await this.ok.issues.getComments({
+            owner: config.GITHUB_OWNER,
+            repo: config.GITHUB_REPO,
+            number: prNumber
+        });
 
-            return res.data;
-        } catch (e) {
-            // noop
-        }
+        return res.data;
     }
 
     async getExistingBotComment(prNumber) {
-        try {
-            const comments = await this.getPullRequestComments(prNumber);
-            const botComment = comments.find(
-                ({ body }) =>
-                    body.indexOf(title) !== -1 ||
-                    body.indexOf(legacyTitle) !== -1
-            );
+        const comments = await this.getPullRequestComments(prNumber);
+        const botComment = comments.find(
+            ({ body }) =>
+                body.indexOf(title) !== -1 || body.indexOf(legacyTitle) !== -1
+        );
 
-            return botComment;
-        } catch (e) {
-            // noop
-        }
+        return botComment;
     }
 
     updatePullRequestComment(message, commentId) {

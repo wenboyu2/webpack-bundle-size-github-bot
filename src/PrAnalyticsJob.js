@@ -10,14 +10,20 @@ class PrAnalyticsJob {
     }
 
     async run() {
-        this.prevPrNumber = await this.gc.getPrevPrNumber(this.currPrNumber);
-        log.info(`run prevPrNumber ==> ${this.prevPrNumber}`);
-        this.currBundleSizes = await getPrBundleSizes(this.currPrNumber);
-        log.info(`#${this.currPrNumber}`, this.currBundleSizes);
-        this.prevBundleSizes = await getPrBundleSizes(this.prevPrNumber);
-        log.info(`#${this.prevPrNumber}`, this.prevBundleSizes);
-        this.bundleSizeAnalytics();
-        this.postComment();
+        try {
+            this.prevPrNumber = await this.gc.getPrevPrNumber(
+                this.currPrNumber
+            );
+            log.info(`run prevPrNumber ==> ${this.prevPrNumber}`);
+            this.currBundleSizes = await getPrBundleSizes(this.currPrNumber);
+            log.info(`#${this.currPrNumber}`, this.currBundleSizes);
+            this.prevBundleSizes = await getPrBundleSizes(this.prevPrNumber);
+            log.info(`#${this.prevPrNumber}`, this.prevBundleSizes);
+            this.bundleSizeAnalytics();
+            this.postComment();
+        } catch (e) {
+            log.error(e);
+        }
     }
 
     bundleSizeAnalytics() {
