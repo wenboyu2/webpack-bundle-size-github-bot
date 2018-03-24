@@ -72,6 +72,10 @@ async function getJenkinsLatestBuildOfPr(prNumber) {
         return !!match && parseInt(match[1], 10) === parseInt(prNumber, 10);
     });
 
+    if (!latestBuild) {
+        throw new Error(`PR #${prNumber} has no build`);
+    }
+
     const buildId = latestBuild.id;
 
     if (latestBuild.result !== 'SUCCESS') {
