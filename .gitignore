@@ -6,6 +6,7 @@ yarn-debug.log*
 yarn-error.log*
 bot.config.js
 .npmrc
+**/lib
 
 # Runtime data
 pids

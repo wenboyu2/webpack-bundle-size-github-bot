@@ -1,0 +1,14 @@
+{
+    "presets": [
+        [
+            "env",
+            {
+                "targets": {
+                    "node": "8.9"
+                }
+            }
+        ],
+        "flow"
+    ],
+    "plugins": ["transform-object-rest-spread"]
+}

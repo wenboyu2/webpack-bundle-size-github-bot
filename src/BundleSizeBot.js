@@ -1,14 +1,17 @@
-const log = require('loglevel');
+// @flow
+import log from 'loglevel';
 
-const GithubClient = require('./GithubClient');
-const PrAnalyticsJob = require('./PrAnalyticsJob');
+import GithubClient from './GithubClient';
+import PrAnalyticsJob from './PrAnalyticsJob';
 
 class BundleSizeBot {
     constructor() {
         this.gc = new GithubClient();
     }
 
-    async run() {
+    gc: BundleSizeBot;
+
+    async run(): Promise<*> {
         const allOpenPrNumbers = await this.gc.getOpenPullRequestsNumbers();
         log.info(`BundleSizeBot allOpenPrNumbers ==> ${allOpenPrNumbers}`);
 
@@ -21,4 +24,4 @@ class BundleSizeBot {
     }
 }
 
-module.exports = BundleSizeBot;
+export default BundleSizeBot;

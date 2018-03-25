@@ -1,9 +1,8 @@
 module.exports = {
     env: {
-        es6: true,
-        amd: true
+        node: true
     },
-    extends: 'eslint:recommended',
+    extends: ['eslint:recommended', 'plugin:flowtype/recommended'],
     rules: {
         indent: ['error', 4],
         'linebreak-style': ['error', 'unix'],
@@ -12,12 +11,14 @@ module.exports = {
     },
     globals: {
         module: true,
-        process: true
+        process: true,
+        Promise: true
     },
     parserOptions: {
         ecmaVersion: 2017,
         ecmaFeatures: {
             experimentalObjectRestSpread: true
         }
-    }
+    },
+    plugins: ['import', 'flowtype']
 };
