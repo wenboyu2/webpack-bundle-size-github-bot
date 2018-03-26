@@ -1,7 +1,8 @@
 module.exports = {
     env: {
         es6: true,
-        amd: true
+        amd: true,
+        jest: true
     },
     extends: 'eslint:recommended',
     rules: {

@@ -24,7 +24,9 @@ class GithubClient {
             head: 'master'
         });
         log.info(
-            `getMergeBaseCommit #${prNumber} ==> ${res.data.merge_base_commit.sha}`
+            `getMergeBaseCommit #${prNumber} ==> ${
+                res.data.merge_base_commit.sha
+            }`
         );
         return res.data.merge_base_commit.sha;
     }
@@ -60,7 +62,9 @@ class GithubClient {
 
     async getCommitPrNumber(commitHash) {
         const res = await this.ok.search.issues({
-            q: `repo:${config.GITHUB_OWNER}/${config.GITHUB_REPO} ${commitHash.substr(0, 7)}`
+            q: `repo:${config.GITHUB_OWNER}/${
+                config.GITHUB_REPO
+            } ${commitHash.substr(0, 7)}`
         });
 
         const items = res.data.items;
