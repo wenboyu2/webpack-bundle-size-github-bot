@@ -42,6 +42,8 @@ GITHUB_REPO=xxx       # github repo to run the bot on
 GITHUB_TOKEN=xxx      # github token
 GITHUB_USERNAME=xxx   # github username
 GITHUB_BASE_URL=xxx   # github base url
+JENKINS_BASE=jenkins.xxx.net
+JENKINS_PROJECT=Your/pipelines/CI/pipelines/Job
 ```
 
 2.  Create a `bot.config.js` file in the project root, each object in the `bundles` array specifies a bundle name and bundle file name regex pattern
