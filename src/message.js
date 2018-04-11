@@ -33,8 +33,8 @@ const getTableRows = ({ curr, diff, prev, diffPercent }) => {
     return res;
 };
 
-const getTableRow = (name, curr, prev, diff) =>
-    `| ${name} | ${filesize(diff)} | ${filesize(prev)} | ${filesize(curr)} |\n`;
+const getTableRow = (name, curr, prev, diff, diffPercent) =>
+    `| ${name} | ${filesize(diff)}| ${diffPercent.toFixed(2)}% | ${filesize(prev)} | ${filesize(curr)} |\n`;
 
 module.exports = {
     getMessage,
