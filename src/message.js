@@ -5,13 +5,13 @@ const legacyTitle = '**:zap:Hello, I\'m a bot:zap:**';
 
 const getMessage = (data, prevPrNumber) => {
     const tableContent = getTableRows(data);
-    const { curr, prev, diff } = data.total;
-    const totalTableRow = `| Total | ${filesize(diff)} | ${filesize(prev)} | ${filesize(curr)} |\n`;
+    const { curr, prev, diff, diffPercent } = data.total;
+    const totalTableRow = `| Total | ${filesize(diff)} | ${diffPercent.toFixed(2)}% | ${filesize(prev)} | ${filesize(curr)} |\n`;
     return `
 ${title}
 
-| Bundle        | Diff | Before | After |
-| ------------- |:----:|:------:|:-----:|
+| Bundle        | Diff | Percentage Diff | Before | After |
+| ------------- |:----:|:---------------:|:------:|:-----:|
 ${tableContent}${totalTableRow}
 Compared against previously merged PR #${prevPrNumber}
 
@@ -19,10 +19,16 @@ Compared against previously merged PR #${prevPrNumber}
 `;
 };
 
-const getTableRows = ({ curr, diff, prev }) => {
+const getTableRows = ({ curr, diff, prev, diffPercent }) => {
     let res = '';
     Object.keys(curr).forEach(name => {
-        res += getTableRow(name, curr[name], prev[name], diff[name]);
+        res += getTableRow(
+            name,
+            curr[name],
+            prev[name],
+            diff[name],
+            diffPercent[name]
+        );
     });
     return res;
 };

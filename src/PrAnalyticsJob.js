@@ -28,10 +28,11 @@ class PrAnalyticsJob {
 
     bundleSizeAnalytics() {
         this.diffBundleSizes = {};
-        this.totalBundleSizes = { curr: 0, prev: 0, diff: 0 };
+        this.diffPercentBundleSizes = {};
+        this.totalBundleSizes = { curr: 0, prev: 0, diff: 0, diffPercent: 0 };
         Object.keys(this.currBundleSizes).forEach(key => {
-            const currVal = this.currBundleSizes[key];
-            const prevVal = this.prevBundleSizes[key];
+            const currVal = this.currBundleSizes[key] | 0;
+            const prevVal = this.prevBundleSizes[key] | 0;
             const diff = currVal - prevVal;
 
             this.totalBundleSizes.prev += prevVal;
@@ -39,8 +40,14 @@ class PrAnalyticsJob {
             this.totalBundleSizes.diff += diff;
 
             this.diffBundleSizes[key] = diff;
-            this.diffBundleSizes.totalDiff += diff;
+            this.diffPercentBundleSizes[key] = prevVal
+                ? diff / prevVal * 100
+                : 0;
         });
+        this.totalBundleSizes.diffPercent = this.totalBundleSizes.prev
+            ? this.totalBundleSizes.diff / this.totalBundleSizes.prev * 100
+            : 0;
+
         log.info(
             `#${this.currPrNumber} - #${this.prevPrNumber}`,
             this.totalBundleSizes
@@ -51,6 +58,7 @@ class PrAnalyticsJob {
         const data = {
             curr: this.currBundleSizes,
             diff: this.diffBundleSizes,
+            diffPercent: this.diffPercentBundleSizes,
             prev: this.prevBundleSizes,
             total: this.totalBundleSizes
         };
