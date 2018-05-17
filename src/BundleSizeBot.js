@@ -1,7 +1,10 @@
 const log = require('loglevel');
+const config = require('dotenv').config().parsed;
 
 const GithubClient = require('./GithubClient');
 const PrAnalyticsJob = require('./PrAnalyticsJob');
+
+const INTERVAL_BETWEEN_JOBS = config.INTERVAL_BETWEEN_JOBS || 5000;
 
 class BundleSizeBot {
     constructor() {
@@ -16,8 +19,18 @@ class BundleSizeBot {
             allOpenPrNumbers,
             prNumber => new PrAnalyticsJob(prNumber, this.gc)
         );
+        var jobIdx = 0;
 
-        await Promise.all(Array.prototype.map.call(jobs, job => job.run()));
+        var interval = setInterval(() => {
+            if (jobIdx >= jobs.length) {
+                clearInterval(interval);
+                return;
+            }
+
+            const job = jobs[jobIdx];
+            job.run();
+            jobIdx += 1;
+        }, INTERVAL_BETWEEN_JOBS);
     }
 }
 

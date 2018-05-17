@@ -12,7 +12,9 @@ module.exports = {
     },
     globals: {
         module: true,
-        process: true
+        process: true,
+        setInterval: true,
+        clearInterval: true
     },
     parserOptions: {
         ecmaVersion: 2017,
