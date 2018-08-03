@@ -42,7 +42,7 @@ async function getJenkinsPrBundleSizes(prNumber) {
     log.info(`getPrBundleSizes - jobId #${prNumber} ==> ${jobId}`);
 
     const res = await axios.get(
-        `${baseUrl}/blue/rest/organizations/jenkins/pipelines/${config.JENKINS_PROJECT}/runs/${jobId}/log`
+        `${baseUrl}/blue/rest/organizations/jenkins/pipelines/${config.JENKINS_PROJECT}/runs/${jobId}/log?start=0`
     );
     return parseJobLog(res.data);
 }
